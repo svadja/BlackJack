@@ -9,7 +9,6 @@ import com.sasav.blackjack.model.card.Card;
 import com.sasav.blackjack.model.security.LoginDetails;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -41,11 +40,11 @@ public class Game {
     
     @Lob
     @Column(name = "playerSet")
-    private LinkedList<Card> playerSet;
+    private ArrayList<Card> playerSet;
     
     @Lob
     @Column(name = "dealerSet")
-    private LinkedList<Card> dealerSet;
+    private ArrayList<Card> dealerSet;
     
     @Lob
     @Column(name = "cardDeck")
@@ -61,7 +60,7 @@ public class Game {
     public Game() {
     }
 
-    public Game(LoginDetails user, LinkedList<Card> playerSet, LinkedList<Card> dealerSet, ArrayList<Card> cardDeck, long bet, GameStatus status) {
+    public Game(LoginDetails user, ArrayList<Card> playerSet, ArrayList<Card> dealerSet, ArrayList<Card> cardDeck, long bet, GameStatus status) {
         this.user = user;
         this.playerSet = playerSet;
         this.dealerSet = dealerSet;
@@ -70,7 +69,7 @@ public class Game {
         this.status = status;
     }
 
-    public Game(int id, LoginDetails user, LinkedList<Card> playerSet, LinkedList<Card> dealerSet, ArrayList<Card> cardDeck, long bet, GameStatus status) {
+    public Game(int id, LoginDetails user, ArrayList<Card> playerSet, ArrayList<Card> dealerSet, ArrayList<Card> cardDeck, long bet, GameStatus status) {
         this.id = id;
         this.user = user;
         this.playerSet = playerSet;
@@ -98,19 +97,19 @@ public class Game {
         this.user = user;
     }
 
-    public LinkedList<Card> getPlayerSet() {
+    public ArrayList<Card> getPlayerSet() {
         return playerSet;
     }
 
-    public void setPlayerSet(LinkedList<Card> playerSet) {
+    public void setPlayerSet(ArrayList<Card> playerSet) {
         this.playerSet = playerSet;
     }
 
-    public LinkedList<Card> getDealerSet() {
+    public ArrayList<Card> getDealerSet() {
         return dealerSet;
     }
 
-    public void setDealerSet(LinkedList<Card> dealerSet) {
+    public void setDealerSet(ArrayList<Card> dealerSet) {
         this.dealerSet = dealerSet;
     }
 

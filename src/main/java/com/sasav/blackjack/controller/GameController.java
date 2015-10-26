@@ -72,4 +72,7 @@ public class GameController {
         gameCore.createNewGame("login", bet);
         return "game";
     }
+    
+    
+    
 }

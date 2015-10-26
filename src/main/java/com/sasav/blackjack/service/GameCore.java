@@ -12,11 +12,13 @@ import com.sasav.blackjack.model.card.Card;
 import com.sasav.blackjack.model.card.CardSuit;
 import com.sasav.blackjack.model.game.Game;
 import com.sasav.blackjack.model.game.GameActor;
+import com.sasav.blackjack.model.game.GamePoints;
 import com.sasav.blackjack.model.game.GameStatus;
 import com.sasav.blackjack.model.security.LoginDetails;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -127,7 +129,7 @@ public class GameCore {
 
     }
 
-    public GameStatus createNewGame(String username, long bet ) {
+    public GameStatus createNewGame(String username, long bet) {
 
         LoginDetails loginDetails = userDao.getLoginDetailsByUsername(username);
         if (loginDetails != null) {
@@ -136,9 +138,36 @@ public class GameCore {
             return GameStatus.ERROR;
         }
     }
-    
-    public Game getUserGame(String username){
-            return gameDao.getGameByUsername(username);
+
+    public Game getUserGame(String username) {
+        return gameDao.getGameByUsername(username);
+    }
+
+    public GamePoints countPoints(ArrayList<Card> cardSet) {
+        int countAce = 0;
+        int countFigure = 0;
+        int minPoint = 0;
+        boolean bj = false;
+        for (Card card : cardSet) {
+            int rank = card.getRank();
+            if (rank > 10) {
+                minPoint = minPoint + 10;
+                countFigure++;
+            } else if (rank == 1) {
+                minPoint = minPoint + 1;
+                countAce++;
+            } else {
+                minPoint = minPoint + rank;
+            }
+        }
+        int maxPoint = minPoint;
+        if ((countAce > 0) && (maxPoint < 11)) {
+            maxPoint = maxPoint + 10;
+            if ((maxPoint == 21) && (countFigure > 0) && (cardSet.size() == 2)) {
+                bj=true;
+            }
+        }
+        return new GamePoints(minPoint, maxPoint, bj);
     }
 
 }

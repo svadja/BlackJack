@@ -19,38 +19,51 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author Vadim
  */
 public class AccountMaster {
+
     @Autowired
     CommonDao commonDao;
-    
+
     @Autowired
     AccountDao accountDao;
-    
+
     @Autowired
     UserDao userDao;
-    
-    public Account getAccountByUsername(String username){
+
+    public Account getAccountByUsername(String username) {
         return accountDao.getAccountByUsername(username);
     }
-    
-    public boolean depositUserAccount(String username, int amount){
+
+    public boolean depositUserAccount(String username, int amount) {
         Account account = accountDao.getAccountByUsername(username);
-        if (account!=null){
+        if (account != null) {
             AccountTransaction transaction = new AccountTransaction(account, amount, TransactionType.DEPOSIT);
             account.setAmount(account.getAmount() + amount);
             return accountDao.runAccountTransaction(account, transaction);
-        }else{
+        } else {
             return false;
         }
     }
-    
-    public AccountTransaction createTransactionForUser(String username){
+
+    public boolean withDrawBet(String username, int bet) {
         Account account = accountDao.getAccountByUsername(username);
-        if (account!=null){
-           return new AccountTransaction(account, 0, TransactionType.BLANK);
-        }else{
-           return null;
+        if (account != null) {
+            AccountTransaction transaction = new AccountTransaction(account, bet, TransactionType.BET);
+            //@TODO: Неправильно - тут можуть бути уже неакуальні дані і можем зайти в мінус. Потрібно переносити все це в одну транзакцію. 
+            account.setAmount(account.getAmount() - bet);
+            return accountDao.runAccountTransaction(account, transaction);
+        } else {
+            return false;
         }
-        
     }
-    
+
+    public AccountTransaction createTransactionForUser(String username) {
+        Account account = accountDao.getAccountByUsername(username);
+        if (account != null) {
+            return new AccountTransaction(account, 0, TransactionType.BLANK);
+        } else {
+            return null;
+        }
+
+    }
+
 }

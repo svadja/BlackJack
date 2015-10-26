@@ -15,6 +15,7 @@
     </head>
     <body onload='document.loginForm.username.focus();'>
         <div class="container">
+<a href="${pageContext.request.contextPath}/init">Init test player </a> <h6>Test player: login - player, password - 123</h6>
             <div id="login-box" class="form-signin">
                 <h3>SIGN IN</h3>
                 <c:if test="${not empty error}">
@@ -23,7 +24,6 @@
                 <c:if test="${not empty msg}">
                     <div class="msg">${msg}</div>
                 </c:if>
-                <h6>Test player: login - player, password - 123</h6>    
                 <form name="loginForm"
                       action="<c:url value='j_spring_security_check' />" method="POST">
                     <label for="username" class="sr-only">Login</label>

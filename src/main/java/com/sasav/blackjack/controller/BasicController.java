@@ -37,11 +37,6 @@ public class BasicController {
     @Autowired
     AccountMaster accountMaster;
 
-    @RequestMapping(value = {"/home", "/"}, method = RequestMethod.GET)
-    public String mainPage() {
-        return "home";
-    }
-
     @RequestMapping(value = "/login", method = RequestMethod.GET)
     public String loginPage() {
         return "login";

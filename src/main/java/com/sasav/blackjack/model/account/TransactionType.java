@@ -14,5 +14,6 @@ public enum TransactionType {
     WITHDRAW,
     GAME_WIN,
     GAME_LOSS,
+    BET,
     BLANK
 }

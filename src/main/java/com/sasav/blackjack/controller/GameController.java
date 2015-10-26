@@ -8,6 +8,7 @@ package com.sasav.blackjack.controller;
 import com.sasav.blackjack.dao.CommonDao;
 import com.sasav.blackjack.model.account.Account;
 import com.sasav.blackjack.model.game.Game;
+import com.sasav.blackjack.model.game.GameActor;
 import com.sasav.blackjack.model.game.GameStatus;
 import com.sasav.blackjack.service.AccountMaster;
 import com.sasav.blackjack.service.GameCore;
@@ -35,44 +36,73 @@ public class GameController {
 
     @Autowired
     GameCore gameCore;
-    
+
     @Autowired
     AccountMaster accountMaster;
 
-    @RequestMapping(value = "/new_game_page", method = RequestMethod.GET)
-    public ModelAndView newGamePage() {
+    @RequestMapping(value = {"/game", "/"}, method = RequestMethod.GET)
+    public ModelAndView gamePage() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-	String login = auth.getName();
-        ModelAndView mv = new ModelAndView("new-game");
-        Game game = gameCore.getUserGame(login);
-        String message="WELLCOME";
-        if((game!=null)&&(game.getStatus()!=null)){
-           if(game.getStatus().equals(GameStatus.PLAYER_LOST)) {
-               message = "YOU LOST";
-           }else if(game.getStatus().equals(GameStatus.PLAYER_WIN)) {
-               message = "YOU WIN";
-           } else if(game.getStatus().equals(GameStatus.PROCESS)) {
-               return new ModelAndView("game");
-           } 
+        String login = auth.getName();
+        ModelAndView mv = new ModelAndView("game");
+        Game userGame = gameCore.getUserGame(login);
+        if (userGame == null) {
+            return new ModelAndView("error");
         }
-        int accountAmount = 0;
         Account account = accountMaster.getAccountByUsername(login);
-        if (account!=null){
-            accountAmount = account.getAmount();
+        if (account != null) {
+            mv.addObject("accountAmount", account.getAmount());
         }
-        mv.addObject("message", message);
-        mv.addObject("accountAmount", accountAmount);
+        mv.addObject("userGame", userGame);
+
         return mv;
     }
 
-    @RequestMapping(value = "/new_game", method = { RequestMethod.GET, RequestMethod.POST } )
-    public String newGameRequest(@RequestParam(value = "bet", required = true) long bet) {
+    @RequestMapping(value = "/start_game", method = RequestMethod.GET)
+    public ModelAndView startGameRequest(@RequestParam(value = "bet", required = true) int bet) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-	String login = auth.getName();
-        gameCore.createNewGame("login", bet);
-        return "game";
+        String login = auth.getName();
+        ModelAndView mv = new ModelAndView("game");
+        Game userGame = gameCore.startNewGame(login, bet);
+        if (userGame == null) {
+            return new ModelAndView("error");
+        }
+        Account account = accountMaster.getAccountByUsername(login);
+        if (account != null) {
+            mv.addObject("accountAmount", account.getAmount());
+        }
+        mv.addObject("userGame", userGame);
+        return mv;
     }
-    
-    
-    
+
+    @RequestMapping(value = "/hit", method = RequestMethod.GET)
+    public ModelAndView hit() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String login = auth.getName();
+        ModelAndView mv = new ModelAndView("game");
+        Game userGame = gameCore.getUserGame(login);
+        if (userGame == null) {
+            return new ModelAndView("error");
+        }
+        if (userGame.getStatus().equals(GameStatus.PROCESS)) {
+            gameCore.pullRandomCardFromDeck(userGame, GameActor.PLAYER);
+        }
+        Account account = accountMaster.getAccountByUsername(login);
+        if (account != null) {
+            mv.addObject("accountAmount", account.getAmount());
+        }
+        mv.addObject("userGame", gameCore.getUserGame(login));
+        return mv;
+    }
+
+    @RequestMapping(value = "/stand", method = RequestMethod.GET)
+    public ModelAndView stand() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String login = auth.getName();
+        ModelAndView mv = new ModelAndView("redirect:game");
+        Game userGame = gameCore.getUserGame(login);
+        LOG.info(gameCore.countPoints(userGame.getPlayerSet()).getMax());
+        return mv;
+    }
+
 }

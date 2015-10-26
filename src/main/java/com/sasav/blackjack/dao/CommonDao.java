@@ -9,6 +9,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import org.apache.log4j.Logger;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -23,10 +24,12 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class CommonDao {
 
+    private static final Logger LOG = Logger.getLogger(CommonDao.class.getName());
+
     @Autowired
     private SessionFactory sessionFactory;
 
-    public void saveOrUpdate(Object object) {
+    public boolean saveOrUpdate(Object object) {
         Session session = sessionFactory.openSession();
         Transaction tx = null;
         try {
@@ -39,12 +42,13 @@ public class CommonDao {
             if (tx != null) {
                 tx.rollback();
             }
-            throw e;
+            LOG.error("Saving with error ", e);
+            return false;
         }
-
+        return true;
     }
 
-    public void savaOrUpdateAll(Collection coll) {
+    public boolean savaOrUpdateAll(Collection coll) {
         Session session = sessionFactory.openSession();
         Transaction tx = null;
         try {
@@ -59,9 +63,10 @@ public class CommonDao {
             if (tx != null) {
                 tx.rollback();
             }
-            throw e;
+            LOG.error("Saving with error ", e);
+            return false;
         }
-
+        return true;
     }
 
     public Object getById(String clazzString, final Serializable id) {

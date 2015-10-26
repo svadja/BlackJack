@@ -5,9 +5,11 @@
  */
 package com.sasav.blackjack.service;
 
+import com.sasav.blackjack.dao.AccountDao;
 import com.sasav.blackjack.dao.CommonDao;
 import com.sasav.blackjack.dao.GameDao;
 import com.sasav.blackjack.dao.UserDao;
+import com.sasav.blackjack.model.account.Account;
 import com.sasav.blackjack.model.card.Card;
 import com.sasav.blackjack.model.card.CardSuit;
 import com.sasav.blackjack.model.game.Game;
@@ -94,7 +96,13 @@ public class GameCore {
     GameDao gameDao;
 
     @Autowired
+    AccountDao accountDao;
+
+    @Autowired
     UserDao userDao;
+
+    @Autowired
+    AccountMaster accountMaster;
 
     public void pullRandomCardFromDeck(Game game, GameActor actor) {
         ArrayList<Card> cardDeck = game.getCardDeck();
@@ -109,33 +117,59 @@ public class GameCore {
         commonDao.saveOrUpdate(game);
     }
 
-    public GameStatus createNewGame(LoginDetails loginDetails, long bet) {
+    public Game createNewGame(LoginDetails loginDetails, int bet) {
+        Game game = gameDao.getGameByUsername(loginDetails.getUsername());
+        boolean noError = false;
+        if (game == null) {
+            game = new Game(loginDetails, null, null, (ArrayList<Card>) DEFAULT_CARD_DECK.clone(), bet, GameStatus.NEW);
+            noError = commonDao.saveOrUpdate(game);
+
+        } else {
+            noError = true;
+            if (!game.getStatus().equals(GameStatus.PROCESS)) {
+                game.setStatus(GameStatus.NEW);
+                game.setBet(bet);
+                game.setPlayerSet(new ArrayList<Card>());
+                game.setDealerSet(new ArrayList<Card>());
+                game.setCardDeck((ArrayList<Card>) DEFAULT_CARD_DECK.clone());
+                noError = commonDao.saveOrUpdate(game);
+            }
+        }
+        return noError ? game : null;
+    }
+
+    public Game createNewGame(String username, int bet) {
+        LoginDetails loginDetails = userDao.getLoginDetailsByUsername(username);
+        return (loginDetails != null) ? createNewGame(loginDetails, bet) : null;
+    }
+
+    public Game startNewGame(String username, int bet) {
+        LoginDetails loginDetails = userDao.getLoginDetailsByUsername(username);
+        if (loginDetails == null) {
+            return null;
+        }
         Game game = gameDao.getGameByUsername(loginDetails.getUsername());
         if (game == null) {
             game = new Game(loginDetails, null, null, (ArrayList<Card>) DEFAULT_CARD_DECK.clone(), bet, GameStatus.NEW);
-            commonDao.saveOrUpdate(game);
-            return GameStatus.NEW;
+            if (!commonDao.saveOrUpdate(game)) {
+                return null;
+            }
         } else if (game.getStatus().equals(GameStatus.PROCESS)) {
-            return GameStatus.PROCESS;
-        } else {
-            game.setStatus(GameStatus.NEW);
-            game.setBet(bet);
-            game.setPlayerSet(null);
-            game.setDealerSet(null);
-            game.setCardDeck((ArrayList<Card>) DEFAULT_CARD_DECK.clone());
-            commonDao.saveOrUpdate(game);
-            return GameStatus.NEW;
+            return game;
         }
-
-    }
-
-    public GameStatus createNewGame(String username, long bet) {
-
-        LoginDetails loginDetails = userDao.getLoginDetailsByUsername(username);
-        if (loginDetails != null) {
-            return createNewGame(loginDetails, bet);
+        Account account = accountDao.getAccountByUsername(username);
+        if ((account != null) && (account.getAmount() >= bet) && (accountMaster.withDrawBet(username, (int) bet))) {
+            game.setStatus(GameStatus.PROCESS);
+            game.setBet(bet);
+            game.setPlayerSet(new ArrayList<Card>());
+            game.setDealerSet(new ArrayList<Card>());
+            game.setCardDeck((ArrayList<Card>) DEFAULT_CARD_DECK.clone());
+            pullRandomCardFromDeck(game, GameActor.PLAYER);
+            pullRandomCardFromDeck(game, GameActor.PLAYER);
+            pullRandomCardFromDeck(game, GameActor.DEALER);
+            return game;
         } else {
-            return GameStatus.ERROR;
+            return null;
         }
     }
 
@@ -164,7 +198,7 @@ public class GameCore {
         if ((countAce > 0) && (maxPoint < 11)) {
             maxPoint = maxPoint + 10;
             if ((maxPoint == 21) && (countFigure > 0) && (cardSet.size() == 2)) {
-                bj=true;
+                bj = true;
             }
         }
         return new GamePoints(minPoint, maxPoint, bj);

@@ -19,3 +19,7 @@ body {
     margin-bottom: 125px;
     margin-top: 125px; 
 }
+
+div[class^="zone-"], div[class*=" zone-"] {
+    height: 200px;
+}

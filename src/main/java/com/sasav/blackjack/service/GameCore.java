@@ -153,6 +153,8 @@ public class GameCore {
             return game;
         }
         Account account = accountDao.getAccountByUsername(username);
+        
+        //@TODO: Доробити перевірку на наявність коштів і повідомляти якщо немає
         if ((account != null) && (account.getAmount().compareTo(bet) != -1) && (accountMaster.withDrawBet(username, bet))) {
             game.setStatus(GameStatus.PROCESS);
             game.setBet(bet);

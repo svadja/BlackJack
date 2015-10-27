@@ -13,5 +13,6 @@
     </head>
     <body>
         <h1>Error!</h1>
+        <h3>${message}</h3>
     </body>
 </html>

@@ -57,9 +57,10 @@
             </div>
 
             <div class="row zone-dealer">
-                <div class="row zone-player">
+                <div class="col-md-4 col-md-offset-4">
+
                     <c:forEach var="card" items="${userGame.dealerSet}">
-                        ${card.rank}
+                        <img src="${pageContext.request.contextPath}/resources/img/cards/${card.suit}${card.rank}.png">
                     </c:forEach>
                 </div>  
 
@@ -84,7 +85,7 @@
                                 <c:when test="${userGame.status ==  'PLAYER_WIN'}"><h3>YOUR WIN</h3></c:when>
                                 <c:when test="${userGame.status ==  'PLAYER_LOST'}"><h3>YOU LOST</h3></c:when>
                                 <c:when test="${userGame.status ==  'PUSH'}"><h3>PUSH</h3></c:when>
-                                 <c:when test="${userGame.status ==  'PLAYER_BJ'}"><h3>BLACK JACK</h3></c:when>
+                                <c:when test="${userGame.status ==  'PLAYER_BJ'}"><h3>BLACK JACK</h3></c:when>
                             </c:choose>
                         </div>
                         <div  class="col-md-2 col-md-offset-5">
@@ -96,9 +97,11 @@
 
             </div> 
             <div class="row zone-player">
-                <c:forEach var="card" items="${userGame.playerSet}">
-                    ${card.rank}
-                </c:forEach>
+                <div class="col-md-4 col-md-offset-4">
+                    <c:forEach var="card" items="${userGame.playerSet}">
+                        <img src="${pageContext.request.contextPath}/resources/img/cards/${card.suit}${card.rank}.png">
+                    </c:forEach>
+                </div>
             </div>             
 
 

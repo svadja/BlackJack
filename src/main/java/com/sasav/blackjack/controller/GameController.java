@@ -63,46 +63,34 @@ public class GameController {
     public ModelAndView startGameRequest(@RequestParam(value = "bet", required = true) BigDecimal bet) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String login = auth.getName();
-        ModelAndView mv = new ModelAndView("game");
+        
+         Account account = accountMaster.getAccountByUsername(login);
+        if (account != null) {
+            if(account.getAmount().compareTo(bet) == -1){
+              return new ModelAndView("error","message", "Not enough money");
+            }
+        }
         Game userGame = gameCore.startNewGame(login, bet);
         if (userGame == null) {
-            return new ModelAndView("error");
+            return new ModelAndView("error","message", "Game is not created");
         }
-        Account account = accountMaster.getAccountByUsername(login);
-        if (account != null) {
-            mv.addObject("accountAmount", account.getAmount());
-        }
-        mv.addObject("userGame", userGame);
-        return mv;
+        return new ModelAndView("redirect:game");
     }
 
     @RequestMapping(value = "/hit", method = RequestMethod.GET)
     public ModelAndView hit() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String login = auth.getName();
-        ModelAndView mv = new ModelAndView("game");
-        
-        Game userGame = gameCore.hit(login);
-         Account account = accountMaster.getAccountByUsername(login);
-        if (account != null) {
-            mv.addObject("accountAmount", account.getAmount());
-        }
-        mv.addObject("userGame",userGame);
-        return mv;
+        gameCore.hit(login);
+        return new ModelAndView("redirect:game");
     }
 
     @RequestMapping(value = "/stand", method = RequestMethod.GET)
     public ModelAndView stand() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String login = auth.getName();
-        ModelAndView mv = new ModelAndView("game");
-        Game userGame = gameCore.stand(login);
-         Account account = accountMaster.getAccountByUsername(login);
-        if (account != null) {
-            mv.addObject("accountAmount", account.getAmount());
-        }
-        mv.addObject("userGame",userGame);
-        return mv;
+        gameCore.stand(login);
+        return new ModelAndView("redirect:game");
     }
 
 }

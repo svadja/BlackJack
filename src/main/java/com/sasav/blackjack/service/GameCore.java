@@ -172,7 +172,15 @@ public class GameCore {
             return null;
         }
     }
+    
+    public void hit(String username){
+        
+    }
 
+    public void stand(String username){
+        
+    }
+    
     public Game getUserGame(String username) {
         return gameDao.getGameByUsername(username);
     }
@@ -203,5 +211,6 @@ public class GameCore {
         }
         return new GamePoints(minPoint, maxPoint, bj);
     }
+    
 
 }

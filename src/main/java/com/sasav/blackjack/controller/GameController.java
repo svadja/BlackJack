@@ -12,6 +12,7 @@ import com.sasav.blackjack.model.game.GameActor;
 import com.sasav.blackjack.model.game.GameStatus;
 import com.sasav.blackjack.service.AccountMaster;
 import com.sasav.blackjack.service.GameCore;
+import java.math.BigDecimal;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -47,7 +48,7 @@ public class GameController {
         ModelAndView mv = new ModelAndView("game");
         Game userGame = gameCore.getUserGame(login);
         if (userGame == null) {
-            return new ModelAndView("error");
+                return new ModelAndView("error");
         }
         Account account = accountMaster.getAccountByUsername(login);
         if (account != null) {
@@ -59,7 +60,7 @@ public class GameController {
     }
 
     @RequestMapping(value = "/start_game", method = RequestMethod.GET)
-    public ModelAndView startGameRequest(@RequestParam(value = "bet", required = true) int bet) {
+    public ModelAndView startGameRequest(@RequestParam(value = "bet", required = true) BigDecimal bet) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String login = auth.getName();
         ModelAndView mv = new ModelAndView("game");
@@ -80,18 +81,13 @@ public class GameController {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String login = auth.getName();
         ModelAndView mv = new ModelAndView("game");
-        Game userGame = gameCore.getUserGame(login);
-        if (userGame == null) {
-            return new ModelAndView("error");
-        }
-        if (userGame.getStatus().equals(GameStatus.PROCESS)) {
-            gameCore.pullRandomCardFromDeck(userGame, GameActor.PLAYER);
-        }
-        Account account = accountMaster.getAccountByUsername(login);
+        
+        Game userGame = gameCore.hit(login);
+         Account account = accountMaster.getAccountByUsername(login);
         if (account != null) {
             mv.addObject("accountAmount", account.getAmount());
         }
-        mv.addObject("userGame", gameCore.getUserGame(login));
+        mv.addObject("userGame",userGame);
         return mv;
     }
 
@@ -99,9 +95,13 @@ public class GameController {
     public ModelAndView stand() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String login = auth.getName();
-        ModelAndView mv = new ModelAndView("redirect:game");
-        Game userGame = gameCore.getUserGame(login);
-        LOG.info(gameCore.countPoints(userGame.getPlayerSet()).getMax());
+        ModelAndView mv = new ModelAndView("game");
+        Game userGame = gameCore.stand(login);
+         Account account = accountMaster.getAccountByUsername(login);
+        if (account != null) {
+            mv.addObject("accountAmount", account.getAmount());
+        }
+        mv.addObject("userGame",userGame);
         return mv;
     }
 

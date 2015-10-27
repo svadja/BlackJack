@@ -129,6 +129,7 @@ public class CommonDao {
             session.flush();
             session.clear();
             tx.commit();
+            
         } catch (Exception e) {
             if (tx != null) {
                 tx.rollback();

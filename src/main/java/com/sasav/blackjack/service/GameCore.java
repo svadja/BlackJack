@@ -5,6 +5,8 @@
  */
 package com.sasav.blackjack.service;
 
+import com.sasav.blackjack.Const;
+import com.sasav.blackjack.controller.BasicController;
 import com.sasav.blackjack.dao.AccountDao;
 import com.sasav.blackjack.dao.CommonDao;
 import com.sasav.blackjack.dao.GameDao;
@@ -21,7 +23,9 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import sun.security.x509.CRLDistributionPointsExtension;
 
 /**
  *
@@ -29,6 +33,8 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public class GameCore {
 
+    private static final Logger LOG = Logger.getLogger(GameCore.class.getName());
+    
     public static final ArrayList<Card> DEFAULT_CARD_DECK = new ArrayList<Card>() {
         {
             add(new Card(1, CardSuit.CLUBS));
@@ -104,7 +110,7 @@ public class GameCore {
     @Autowired
     AccountMaster accountMaster;
 
-    public void pullRandomCardFromDeck(Game game, GameActor actor) {
+    public Game pullRandomCardFromDeck(Game game, GameActor actor) {
         ArrayList<Card> cardDeck = game.getCardDeck();
         int index = (int) (Math.random() * cardDeck.size());
         Card card = cardDeck.get(index);
@@ -113,42 +119,31 @@ public class GameCore {
         } else {
             game.getDealerSet().add(card);
         }
-        cardDeck.remove(index);
-        commonDao.saveOrUpdate(game);
+        return game;
     }
 
-    public Game createNewGame(LoginDetails loginDetails, int bet) {
-        Game game = gameDao.getGameByUsername(loginDetails.getUsername());
+    public Game createNewGame(LoginDetails loginDetails) {
+        Game game = getUserGame(loginDetails);
         boolean noError = false;
         if (game == null) {
-            game = new Game(loginDetails, null, null, (ArrayList<Card>) DEFAULT_CARD_DECK.clone(), bet, GameStatus.NEW);
+            game = new Game(loginDetails, null, null, (ArrayList<Card>) DEFAULT_CARD_DECK.clone(), BigDecimal.ZERO, GameStatus.NEW);
             noError = commonDao.saveOrUpdate(game);
 
-        } else {
-            noError = true;
-            if (!game.getStatus().equals(GameStatus.PROCESS)) {
-                game.setStatus(GameStatus.NEW);
-                game.setBet(bet);
-                game.setPlayerSet(new ArrayList<Card>());
-                game.setDealerSet(new ArrayList<Card>());
-                game.setCardDeck((ArrayList<Card>) DEFAULT_CARD_DECK.clone());
-                noError = commonDao.saveOrUpdate(game);
-            }
         }
         return noError ? game : null;
     }
 
-    public Game createNewGame(String username, int bet) {
+    public Game createNewGame(String username) {
         LoginDetails loginDetails = userDao.getLoginDetailsByUsername(username);
-        return (loginDetails != null) ? createNewGame(loginDetails, bet) : null;
+        return (loginDetails != null) ? createNewGame(loginDetails) : null;
     }
 
-    public Game startNewGame(String username, int bet) {
+    public Game startNewGame(String username, BigDecimal bet) {
         LoginDetails loginDetails = userDao.getLoginDetailsByUsername(username);
         if (loginDetails == null) {
             return null;
         }
-        Game game = gameDao.getGameByUsername(loginDetails.getUsername());
+        Game game = getUserGame(loginDetails);
         if (game == null) {
             game = new Game(loginDetails, null, null, (ArrayList<Card>) DEFAULT_CARD_DECK.clone(), bet, GameStatus.NEW);
             if (!commonDao.saveOrUpdate(game)) {
@@ -158,7 +153,7 @@ public class GameCore {
             return game;
         }
         Account account = accountDao.getAccountByUsername(username);
-        if ((account != null) && (account.getAmount() >= bet) && (accountMaster.withDrawBet(username, (int) bet))) {
+        if ((account != null) && (account.getAmount().compareTo(bet) != -1) && (accountMaster.withDrawBet(username, bet))) {
             game.setStatus(GameStatus.PROCESS);
             game.setBet(bet);
             game.setPlayerSet(new ArrayList<Card>());
@@ -167,25 +162,87 @@ public class GameCore {
             pullRandomCardFromDeck(game, GameActor.PLAYER);
             pullRandomCardFromDeck(game, GameActor.PLAYER);
             pullRandomCardFromDeck(game, GameActor.DEALER);
-            return game;
+            if (commonDao.saveOrUpdate(game)) {
+                return game;
+            } else {
+                return getUserGame(username);
+            }
         } else {
-            return null;
+            return game;
         }
     }
-    
-    public void hit(String username){
-        
+
+    public Game hit(String username) {
+        Game game = getUserGame(username);
+        if (game.getStatus().equals(GameStatus.PROCESS)) {
+            game = pullRandomCardFromDeck(game, GameActor.PLAYER);
+            GamePoints points = countPoints(game.getPlayerSet());
+            //Bust
+            if (points.getMin() > 21) {
+                game.setStatus(GameStatus.PLAYER_LOST);
+            }
+            boolean accSaveStatus = false;
+            if (commonDao.saveOrUpdate(game)) {
+               accSaveStatus = accountMaster.depositUserAccount(Const.DEALER_NAME, game.getBet());
+            } else {
+                game = getUserGame(username);
+            }
+        }
+        return game;
     }
 
-    public void stand(String username){
-        
+    public Game stand(String username) {
+        Game game = getUserGame(username);
+        if (game.getStatus().equals(GameStatus.PROCESS)) {
+            GamePoints playerPoints = countPoints(game.getPlayerSet());
+
+            int pPoints = playerPoints.getMax();
+            if (pPoints > 21) {
+                pPoints = playerPoints.getMin();
+            }
+
+            game = pullRandomCardFromDeck(game, GameActor.DEALER);
+            GamePoints dealerPoints = countPoints(game.getDealerSet());
+            int dPoints = dealerPoints.getMax();
+
+            while (dPoints < 17) {
+                game = pullRandomCardFromDeck(game, GameActor.DEALER);
+                dealerPoints = countPoints(game.getDealerSet());
+                dPoints = dealerPoints.getMax();
+                if (dPoints > 21) {
+                    dPoints = dealerPoints.getMin();
+                }
+            }
+
+            game = getGameResult(game);
+            boolean accSaveStatus = false;
+            if (commonDao.saveOrUpdate(game)) {
+                if (game.getStatus().equals(GameStatus.PUSH)) {
+                    accSaveStatus = accountMaster.depositUserAccount(username, game.getBet());
+                } else if (game.getStatus().equals(GameStatus.PLAYER_LOST)) {
+                    accSaveStatus = accountMaster.depositUserAccount(Const.DEALER_NAME, game.getBet());
+                } else if (game.getStatus().equals(GameStatus.PLAYER_BJ)) {
+                    accSaveStatus = accountMaster.winBet(username, Const.DEALER_NAME, game.getBet().multiply(new BigDecimal(2.5)));
+                } else if (game.getStatus().equals(GameStatus.PLAYER_WIN)) {
+                    accSaveStatus = accountMaster.winBet(username, Const.DEALER_NAME, game.getBet().multiply(new BigDecimal(2)));
+                }
+            }else{
+                game = getUserGame(username);
+            }
+
+        }
+        return game;
     }
-    
+
     public Game getUserGame(String username) {
         return gameDao.getGameByUsername(username);
     }
 
-    public GamePoints countPoints(ArrayList<Card> cardSet) {
+    public Game getUserGame(LoginDetails user) {
+        return gameDao.getGameByUsername(user.getUsername());
+    }
+
+    private GamePoints countPoints(ArrayList<Card> cardSet) {
         int countAce = 0;
         int countFigure = 0;
         int minPoint = 0;
@@ -211,6 +268,45 @@ public class GameCore {
         }
         return new GamePoints(minPoint, maxPoint, bj);
     }
-    
+
+    private Game getGameResult(Game game) {
+        GamePoints playerPoints = countPoints(game.getPlayerSet());
+        int pPoints = playerPoints.getMax();
+        if (pPoints > 21) {
+            pPoints = playerPoints.getMin();
+        }
+
+        GamePoints dealerPoints = countPoints(game.getDealerSet());
+        int dPoints = dealerPoints.getMax();
+        if (dPoints > 21) {
+            dPoints = dealerPoints.getMin();
+        }
+        
+        
+        LOG.info("PLAYER: " + pPoints + " BJ: " + playerPoints.isBj() + " DEALER: " + dPoints + " BJ: " + dealerPoints.isBj());
+
+        if (playerPoints.isBj()) {
+            if (dealerPoints.isBj()) {
+                //push
+                game.setStatus(GameStatus.PUSH);
+
+            } else {
+                //black jack player
+                game.setStatus(GameStatus.PLAYER_BJ);
+
+            }
+        } else if ((dPoints > 21) || (pPoints > dPoints)) {
+            //win
+            game.setStatus(GameStatus.PLAYER_WIN);
+
+        } else if (pPoints < dPoints) {
+            //lost
+            game.setStatus(GameStatus.PLAYER_LOST);
+        } else {
+            //push
+            game.setStatus(GameStatus.PUSH);
+        }
+        return game;
+    }
 
 }

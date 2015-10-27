@@ -45,7 +45,7 @@ public class AccountController {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String login = auth.getName();
         accountMaster.depositUserAccount(login, deposit.getAmount());
-        ModelAndView mv = new ModelAndView("home");
+        ModelAndView mv = new ModelAndView("redirect:game");
         return mv;
     }
 }

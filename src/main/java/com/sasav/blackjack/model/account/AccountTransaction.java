@@ -5,6 +5,7 @@
  */
 package com.sasav.blackjack.model.account;
 
+import java.math.BigDecimal;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -34,7 +35,7 @@ public class AccountTransaction {
     private Account account;
     
     @Column(name = "amount")
-    private int amount;
+    private BigDecimal amount;
     
     @Enumerated(EnumType.STRING)
      @Column(name = "tr_type")
@@ -43,13 +44,13 @@ public class AccountTransaction {
     public AccountTransaction() {
     }
 
-    public AccountTransaction(Account account, int amount, TransactionType type) {
+    public AccountTransaction(Account account, BigDecimal amount, TransactionType type) {
         this.account = account;
         this.amount = amount;
         this.type = type;
     }
 
-    public AccountTransaction(int id, Account account, int amount, TransactionType type) {
+    public AccountTransaction(int id, Account account, BigDecimal amount, TransactionType type) {
         this.id = id;
         this.account = account;
         this.amount = amount;
@@ -72,11 +73,11 @@ public class AccountTransaction {
         this.account = account;
     }
 
-    public int getAmount() {
+    public BigDecimal getAmount() {
         return amount;
     }
 
-    public void setAmount(int amount) {
+    public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
 

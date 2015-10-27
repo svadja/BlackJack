@@ -41,7 +41,7 @@ public class Account {
     
     //it is needed BigDecimal
     @Column(name = "amount")
-    private int amount;
+    private BigDecimal amount;
     
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "account", cascade = CascadeType.ALL)
     private List<AccountTransaction> transactions;
@@ -49,13 +49,13 @@ public class Account {
     public Account() {
     }
 
-    public Account(String number, LoginDetails user, int amount) {
+    public Account(String number, LoginDetails user, BigDecimal amount) {
         this.number = number;
         this.user = user;
         this.amount = amount;
     }
 
-    public Account(int id, String number, LoginDetails user, int amount) {
+    public Account(int id, String number, LoginDetails user, BigDecimal amount) {
         this.id = id;
         this.number = number;
         this.user = user;
@@ -86,11 +86,11 @@ public class Account {
         this.user = user;
     }
 
-    public int getAmount() {
+    public BigDecimal getAmount() {
         return amount;
     }
 
-    public void setAmount(int amount) {
+    public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
 

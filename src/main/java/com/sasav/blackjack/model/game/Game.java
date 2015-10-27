@@ -51,7 +51,7 @@ public class Game {
     private ArrayList<Card> cardDeck;    
     
     @Column(name = "bet")
-    private int bet;
+    private BigDecimal bet;
     
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
@@ -60,7 +60,7 @@ public class Game {
     public Game() {
     }
 
-    public Game(LoginDetails user, ArrayList<Card> playerSet, ArrayList<Card> dealerSet, ArrayList<Card> cardDeck, int bet, GameStatus status) {
+    public Game(LoginDetails user, ArrayList<Card> playerSet, ArrayList<Card> dealerSet, ArrayList<Card> cardDeck, BigDecimal bet, GameStatus status) {
         this.user = user;
         this.playerSet = playerSet;
         this.dealerSet = dealerSet;
@@ -69,7 +69,7 @@ public class Game {
         this.status = status;
     }
 
-    public Game(int id, LoginDetails user, ArrayList<Card> playerSet, ArrayList<Card> dealerSet, ArrayList<Card> cardDeck, int bet, GameStatus status) {
+    public Game(int id, LoginDetails user, ArrayList<Card> playerSet, ArrayList<Card> dealerSet, ArrayList<Card> cardDeck, BigDecimal bet, GameStatus status) {
         this.id = id;
         this.user = user;
         this.playerSet = playerSet;
@@ -121,11 +121,11 @@ public class Game {
         this.cardDeck = cardDeck;
     }
 
-    public int getBet() {
+    public BigDecimal getBet() {
         return bet;
     }
 
-    public void setBet(int bet) {
+    public void setBet(BigDecimal bet) {
         this.bet = bet;
     }
 

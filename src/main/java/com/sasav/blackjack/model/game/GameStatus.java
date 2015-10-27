@@ -14,5 +14,7 @@ public enum GameStatus {
     PROCESS,
     PLAYER_WIN,
     PLAYER_LOST,
+    PLAYER_BJ,
+    PUSH,
     ERROR
 }

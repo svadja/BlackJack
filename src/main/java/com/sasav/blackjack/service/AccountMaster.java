@@ -12,6 +12,7 @@ import com.sasav.blackjack.model.account.Account;
 import com.sasav.blackjack.model.account.AccountTransaction;
 import com.sasav.blackjack.model.account.TransactionType;
 import com.sasav.blackjack.model.security.LoginDetails;
+import java.math.BigDecimal;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -33,24 +34,36 @@ public class AccountMaster {
         return accountDao.getAccountByUsername(username);
     }
 
-    public boolean depositUserAccount(String username, int amount) {
+    public boolean depositUserAccount(String username, BigDecimal amount) {
         Account account = accountDao.getAccountByUsername(username);
         if (account != null) {
             AccountTransaction transaction = new AccountTransaction(account, amount, TransactionType.DEPOSIT);
-            account.setAmount(account.getAmount() + amount);
+            account.setAmount(account.getAmount().add(amount));
             return accountDao.runAccountTransaction(account, transaction);
         } else {
             return false;
         }
     }
 
-    public boolean withDrawBet(String username, int bet) {
+    public boolean withDrawBet(String username, BigDecimal bet) {
         Account account = accountDao.getAccountByUsername(username);
         if (account != null) {
             AccountTransaction transaction = new AccountTransaction(account, bet, TransactionType.BET);
-            //@TODO: Неправильно - тут можуть бути уже неакуальні дані і можем зайти в мінус. Потрібно переносити все це в одну транзакцію. 
-            account.setAmount(account.getAmount() - bet);
+            account.setAmount(account.getAmount().subtract(bet));
             return accountDao.runAccountTransaction(account, transaction);
+        } else {
+            return false;
+        }
+    }
+
+    public boolean winBet(String username, String dealerName, BigDecimal amount) {
+        Account accountPlayer = accountDao.getAccountByUsername(username);
+        Account accountDealer = accountDao.getAccountByUsername(dealerName);
+        if ((accountPlayer != null)&&(accountDealer != null)) {
+            AccountTransaction transaction = new AccountTransaction(accountPlayer, amount, TransactionType.GAME_WIN);
+            accountPlayer.setAmount(accountPlayer.getAmount().add(amount));
+            accountDealer.setAmount(accountDealer.getAmount().subtract(amount));
+            return accountDao.runAccountTransaction(accountPlayer,accountDealer, transaction);
         } else {
             return false;
         }
@@ -59,7 +72,7 @@ public class AccountMaster {
     public AccountTransaction createTransactionForUser(String username) {
         Account account = accountDao.getAccountByUsername(username);
         if (account != null) {
-            return new AccountTransaction(account, 0, TransactionType.BLANK);
+            return new AccountTransaction(account, BigDecimal.ZERO, TransactionType.BLANK);
         } else {
             return null;
         }

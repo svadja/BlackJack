@@ -83,6 +83,8 @@
                                 <c:when test="${userGame.status ==  'NEW'}"><h3>WELCOME</h3></c:when>
                                 <c:when test="${userGame.status ==  'PLAYER_WIN'}"><h3>YOUR WIN</h3></c:when>
                                 <c:when test="${userGame.status ==  'PLAYER_LOST'}"><h3>YOU LOST</h3></c:when>
+                                <c:when test="${userGame.status ==  'PUSH'}"><h3>PUSH</h3></c:when>
+                                 <c:when test="${userGame.status ==  'PLAYER_BJ'}"><h3>BLACK JACK</h3></c:when>
                             </c:choose>
                         </div>
                         <div  class="col-md-2 col-md-offset-5">

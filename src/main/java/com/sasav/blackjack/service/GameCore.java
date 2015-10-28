@@ -285,9 +285,6 @@ public class GameCore {
             dPoints = dealerPoints.getMin();
         }
         
-        
-        LOG.info("PLAYER: " + pPoints + " BJ: " + playerPoints.isBj() + " DEALER: " + dPoints + " BJ: " + dealerPoints.isBj());
-
         if (playerPoints.isBj()) {
             if (dealerPoints.isBj()) {
                 //push
@@ -298,13 +295,22 @@ public class GameCore {
                 game.setStatus(GameStatus.PLAYER_BJ);
 
             }
-        } else if ((dPoints > 21) || (pPoints > dPoints)) {
+        }else if (dealerPoints.isBj()) {
+            //black jack dealer
+            game.setStatus(GameStatus.PLAYER_LOST);
+        
+        }else if (pPoints > 21) {
+            //bust
+            game.setStatus(GameStatus.PLAYER_LOST);
+
+        }else if ((dPoints > 21) || (pPoints > dPoints)) {
             //win
             game.setStatus(GameStatus.PLAYER_WIN);
 
         } else if (pPoints < dPoints) {
             //lost
             game.setStatus(GameStatus.PLAYER_LOST);
+            
         } else {
             //push
             game.setStatus(GameStatus.PUSH);

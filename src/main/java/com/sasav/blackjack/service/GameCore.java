@@ -263,7 +263,7 @@ public class GameCore {
             }
         }
         int maxPoint = minPoint;
-        if ((countAce > 0) && (maxPoint < 11)) {
+        if ((countAce > 0) && (maxPoint < 12)) {
             maxPoint = maxPoint + 10;
             if ((maxPoint == 21) && (countFigure > 0) && (cardSet.size() == 2)) {
                 bj = true;

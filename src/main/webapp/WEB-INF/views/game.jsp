@@ -62,6 +62,10 @@
                     <c:forEach var="card" items="${userGame.dealerSet}">
                         <img src="${pageContext.request.contextPath}/resources/img/cards/${card.suit}${card.rank}.png">
                     </c:forEach>
+                        <c:if test="${userGame.status == 'PROCESS'}"  >
+                            <img src="${pageContext.request.contextPath}/resources/img/cards/BACK_V.png">
+                        </c:if>   
+                        
                 </div>  
 
             </div> 

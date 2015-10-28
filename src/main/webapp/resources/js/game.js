@@ -9,7 +9,8 @@ $(function () {
     $('#bet').TouchSpin({
         min: 1,
         max: 100,
-        step: 1
+        step: 1,
+        decimals: 2
     });
 
     $('#btn-new-game').click(function () {

@@ -182,6 +182,7 @@ public class GameCore {
             //Bust
             if (points.getMin() > 21) {
                 game.setStatus(GameStatus.PLAYER_LOST);
+                pullRandomCardFromDeck(game, GameActor.DEALER);
             }
             boolean accSaveStatus = false;
             if (commonDao.saveOrUpdate(game)) {
